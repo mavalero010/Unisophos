@@ -11,12 +11,13 @@ public class Profesor {
 		private String maximo_titulo_academico;
 		private String email;
 		private String direccion;
-		private int telefono;
+		private String telefono;
 		private boolean activo;
 		private int nit;
-		private Curso [] cursos_que_dicta;
+		private  ArrayList<String> cursos_que_dicta = new ArrayList<String>();
 		
-		public Profesor(int id,String nombre, String apellido,int años_docencia, String maximo_titulo_academico, String email, String direccion, int telefono,boolean activo,int nit) {
+		
+		public Profesor(int id,String nombre, String apellido,int años_docencia, String maximo_titulo_academico, String email, String direccion, String telefono,boolean activo,int nit) {
 			this.id=id;
 			this.nombre=nombre;
 			this.apellido=apellido;
@@ -27,25 +28,10 @@ public class Profesor {
 			this.telefono=telefono;
 			this.activo=activo;
 			this.nit=nit;
-			this.cursos_que_dicta = getCursosquedicta(id);
-			
 		}
-		private Curso [] getCursosquedicta(int id) {
-			try{
-				return Curso.getCursosquedicta(id);
-			}catch(Exception e){
-						
-			}
-			return null;
-}
+	
 		
-		private void setAñadir_cursos_quedicta(Curso [] cursos) {
-			try {
-				 Curso.setAñadir_cursos_quedicta(this.id,cursos);
-			}catch(Exception e) {
-				
-			}
-		}
+	
 		public void setNit(int nit) {
 			this.nit=nit;
 		}
@@ -54,30 +40,11 @@ public class Profesor {
 			return this.nit;
 		}
 		
-		public Profesor getprofesor() {
-			try {
-				//Object [] profesor = profesorDB.get_profesor(id).toArray();
-				Object[] profesor=null;
-				
-				int id=(int) profesor[0];
-				String nombre= (String) profesor[1] ;
-				String apellido=(String) profesor[2];
-				int años_docencia= (int) profesor[3];
-				String maximo_titulo_academico =(String) profesor[4];
-				String email=(String) profesor[5];
-				String direccion=(String) profesor[6];
-				int telefono= (int) profesor[7];
-				boolean activo = (boolean) profesor[8];
-				int nit=(int) profesor[9];
-				return new Profesor(id, nombre, apellido, años_docencia, maximo_titulo_academico,email,direccion,telefono,activo,nit);
-			}
-			catch(Exception e){
-			 return null;
-			}
+	
 			
 
 
-		}
+		
 		public String getNombre() {
 			return this.nombre;
 		}
@@ -124,11 +91,11 @@ public class Profesor {
 			this.direccion=d;
 		}
 		
-		public int getTelefono() {
+		public String getTelefono() {
 			return this.telefono;
 		}
 		
-		public void setTelefono(int t) {
+		public void setTelefono(String t) {
 			this.telefono=t;
 		}
 		
@@ -137,6 +104,12 @@ public class Profesor {
 		}
 		public void setActivo(boolean a) {
 			this.activo=a;
+		}
+		public ArrayList<String>  getCursos_que_dicta() {
+			return cursos_que_dicta;
+		}
+		public void setCursos_que_dicta(String cursos) {
+			this.cursos_que_dicta.add(cursos);
 		}
 		
 		
