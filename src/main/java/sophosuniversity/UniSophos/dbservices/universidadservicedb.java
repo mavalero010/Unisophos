@@ -11,6 +11,8 @@ import java.util.ArrayList;
 
 public class universidadservicedb {
 	public static String crearUniversidad(Universidad universidad) {
+
+
 		String query="";
 		String resultado="";
 		Conexion con =new Conexion();
@@ -25,6 +27,7 @@ public class universidadservicedb {
 			p.setInt(2, universidad.getNit());
 			p.setString(3, universidad.getCiudad());
 			p.setString(4, universidad.getPais());
+			
 			p.execute();
 			resultado="Registro de Universidad hecho";
 			con.desconectar();
@@ -35,25 +38,79 @@ public class universidadservicedb {
 	
 	}
 	
+
+	public static Universidad obtenerUniversidad(int nit) {
+		String query="";
+		Conexion con =new Conexion();
+		Connection connection=con.getConnection();
+
+		ResultSet r= null;
+		PreparedStatement p=null;
+		try {
+			query="SELECT * from Universidad WHERE Universidad.nit=?";
+			p=connection.prepareStatement(query);
+			p.setInt(1,nit);
+			
+			r=p.executeQuery();
+			if(r.next()) {
+				String nombre=r.getString("nombre");
+				String ciudad=r.getString("ciudad");
+				String pais=r.getString("pais");
+				Universidad u=new Universidad(nombre,nit,ciudad,pais);
+				return u;
+			}
+			return null;
+		}catch(Exception e){
+			return null;
+		}
+	}
+	public static Boolean findUniversidad(int nit) {
+		String query="";
+		Conexion con =new Conexion();
+		Connection connection=con.getConnection();
+
+		ResultSet r= null;
+		PreparedStatement p=null;
+		try {
+			query="SELECT * from Universidad WHERE Universidad.nit=?";
+			p=connection.prepareStatement(query);
+			p.setInt(1,nit);
+			
+			r=p.executeQuery();
+			if(r.next()) {
+				return true;
+			}
+			return false;
+		}catch(Exception e){
+			return false;
+		}
+	}
+	
 	public static ArrayList<Estudiante> getTodosLosEstudiantes(int nit) {
 		
 		String query="";
 		String query2="";
 		String query3="";
+		String query4="";
 		ResultSet resultado=null;
 		ResultSet r1=null;
 		ResultSet r2=null;
+		ResultSet r3=null;
 		Conexion con =new Conexion();
 		Connection connection=con.getConnection();
 		PreparedStatement p=null;
 		PreparedStatement p2=null;
 		PreparedStatement p3=null;
+		PreparedStatement p4=null;
+		
 		ArrayList<Estudiante> estudiantes=new ArrayList<Estudiante>();
 		
 		try {
 			query="SELECT * FROM Estudiante where nit=? AND activo=TRUE";
 			query2="SELECT T.nombre_materia FROM (SELECT DISTINCT C.nombre_materia,CU.id_estudiante FROM Curso as C, Curso_Profesor_Estudiante as CU WHERE CU.id_curso = C.id_curso AND CU.aprobado=TRUE) as T, Estudiante E WHERE E.id_estudiante=T.id_estudiante AND E.id_estudiante=?";
 			query3="SELECT T.nombre_materia FROM (SELECT DISTINCT C.nombre_materia,CU.id_estudiante FROM Curso as C, Curso_Profesor_Estudiante as CU WHERE CU.id_curso = C.id_curso AND CU.cursado=TRUE) as T, Estudiante E WHERE E.id_estudiante=T.id_estudiante AND E.id_estudiante=?";
+			query4="SELECT T.nombre_materia FROM (SELECT DISTINCT C.nombre_materia,CU.id_estudiante FROM Curso as C, Curso_Profesor_Estudiante as CU WHERE CU.id_curso = C.id_curso AND CU.matriculado=TRUE) as T, Estudiante E WHERE E.id_estudiante=T.id_estudiante AND E.id_estudiante=?";
+			
 			p=connection.prepareStatement(query);
 			p.setInt(1, nit);
 			resultado=p.executeQuery();
@@ -84,6 +141,13 @@ public class universidadservicedb {
 				 System.out.println("Nombre materia: "+p3);
 				 est.setCursos_dados(r2.getString("nombre_materia"));
 			 }
+			    p4=connection.prepareStatement(query4);
+			    p4.setInt(1, est.getId());
+			    r3=p4.executeQuery();
+			   while(r3.next()) {
+					 System.out.println("Nombre materia: "+p3);
+					 est.setCursos_matriculados(r3.getString("nombre_materia"));
+				 }
 				estudiantes.add(est);
 			}
 			con.desconectar();
@@ -166,7 +230,7 @@ public class universidadservicedb {
 		ArrayList<Curso> cursos=new ArrayList<Curso>();
 		
 		try {
-			query="SELECT * FROM Curso where nit=? AND activo=TRUE";
+			query="SELECT * FROM Curso where nit=?";
 			
 			p=connection.prepareStatement(query);
 			p.setInt(1, nit);
@@ -261,7 +325,7 @@ public class universidadservicedb {
 	public static String addCurso(Curso curso) {
 		String query="";
 		String query2="";
-		String resultado="";
+		String resultado="Resgistro no hecho";
 		Conexion con =new Conexion();
 		Connection connection=con.getConnection();
 		PreparedStatement p=null;
@@ -290,7 +354,7 @@ public class universidadservicedb {
 					
 					
 					//Introducir a la tabla
-					query="INSERT into `Curso_Profesor_Estudiante` (`id_curso`,`id_profesor`,`id_estudiante`,`nit`,`aprobado`,`cursado`) VALUES (?,?,?,?,?,?)";
+					query="INSERT into `Curso_Profesor_Estudiante` (`id_curso`,`id_profesor`,`id_estudiante`,`nit`,`aprobado`,`cursado`,`matriculado`) VALUES (?,?,?,?,?,?,?)";
 					p=connection.prepareStatement(query);
 					p.setInt(1, curso.getId());
 					p.setInt(2, curso.getIdProfesor());
@@ -298,6 +362,7 @@ public class universidadservicedb {
 					p.setInt(4, curso.getNit());
 					p.setBoolean(5, false);
 					p.setBoolean(6, false);
+					p.setBoolean(7, false);
 					p.execute();
 					System.out.println("Esto es "+p);
 					System.out.print("NIT: "+curso.getNit()+" ID CURSO: "+curso.getNo_curso()+" Matrícula exitosa");
@@ -346,7 +411,7 @@ public class universidadservicedb {
 		PreparedStatement p=null;
 		
 		try {
-			query="UPDATE  `Curso` SET activo=false where nit=? AND id_curso=?";
+			query="UPDATE  `Curso` SET activo=false where nit=? AND no_curso=?";
 			p=connection.prepareStatement(query);
 			p.setInt(1, nit);
 			p.setInt(2, id_Curso);
@@ -437,15 +502,18 @@ public class universidadservicedb {
 		String query="";
 		String query2="";
 		String query3="";
+		String query4="";
 		String resultado="";
 		Conexion con =new Conexion();
 		ResultSet r=null;
 		ResultSet r1=null;
 		ResultSet r2=null;
+		ResultSet r3=null;
 		Connection connection=con.getConnection();
 		PreparedStatement p=null;
 		PreparedStatement p2=null;
 		PreparedStatement p3=null;
+		PreparedStatement p4=null;
 		
 		try {
 			query="Select * FROM `Estudiante` where nit=? AND id_estudiante=?";
@@ -484,8 +552,16 @@ public class universidadservicedb {
 			 while(r2.next()) {
 			 System.out.println("Nombre materia: "+p3);
 			 est.setCursos_dados(r2.getString("nombre_materia"));
-		 }	 
-			 
+		 }	
+			 query4="SELECT T.nombre_materia FROM (SELECT DISTINCT C.nombre_materia,CU.id_estudiante FROM Curso as C, Curso_Profesor_Estudiante as CU WHERE CU.id_curso = C.id_curso AND CU.matriculado=TRUE) as T, Estudiante E WHERE E.id_estudiante=T.id_estudiante AND E.id_estudiante=?";
+			 p4=connection.prepareStatement(query4);
+			 p4.setInt(1, id_Estudiante);
+			 p4.execute();
+			 r3=p4.executeQuery();
+			 while(r3.next()) {
+			 System.out.println("Nombre materia: "+p4);
+			 est.setCursos_matriculados(r3.getString("nombre_materia"));
+		 }
 			 con.desconectar();
 			return est;
 		}catch(SQLException e){
@@ -684,14 +760,17 @@ public class universidadservicedb {
 		String query2="";
 		String resultado="";
 		String query3="";
+		String query4="";
 		Conexion con =new Conexion();
 		ResultSet r=null;
 		ResultSet r1=null;
 		ResultSet r2=null;
+		ResultSet r3=null;
 		Connection connection=con.getConnection();
 		PreparedStatement p=null;
 		PreparedStatement p2=null;
 		PreparedStatement p3=null;
+		PreparedStatement p4=null;
 		System.out.print("1");
 		try {
 			query="Select * FROM `Estudiante` where nit=? AND nombre=? AND apellido=? AND activo = TRUE";
@@ -736,7 +815,15 @@ public class universidadservicedb {
 			 System.out.println("Nombre materia: "+p3);
 			 est.setCursos_dados(r2.getString("nombre_materia"));
 		 }
-			 
+			 query4="SELECT T.nombre_materia FROM (SELECT DISTINCT C.nombre_materia,CU.id_estudiante FROM Curso as C, Curso_Profesor_Estudiante as CU WHERE CU.id_curso = C.id_curso AND CU.matriculado=TRUE) as T, Estudiante E WHERE E.id_estudiante=T.id_estudiante AND E.id_estudiante=?";
+			 p4=connection.prepareStatement(query4);
+			 p4.setInt(1, id);
+			 p4.execute();
+			 r3=p4.executeQuery();
+			 while(r3.next()) {
+			 System.out.println("Nombre materia: "+p4);
+			 est.setCursos_matriculados(r3.getString("nombre_materia"));
+		 } 
 			 con.desconectar();
 			;
 			 System.out.print("16");
@@ -765,7 +852,7 @@ public class universidadservicedb {
 			p.setInt(1, nit);
 			p.setString(2, nombre_Curso);
 			r=p.executeQuery();
-			System.out.print("R: "+r.next());
+			 System.out.println("R: "+r.next());
 			 int id=r.getInt("id_curso");
 			 String nombre_materia=r.getString("nombre_materia");
 			 int id_curso_prerrequisito=r.getInt("id_curso_prerrequisito");
@@ -775,9 +862,11 @@ public class universidadservicedb {
 			 Boolean activo=r.getBoolean("activo");
 			 int matriculados=r.getInt("matriculados");
 			 int no_curso=r.getInt("no_curso");
-			 p.execute();
+			 System.out.println(no_curso);
 			 Curso cur=new Curso(id,nombre_materia,id_curso_prerrequisito,num_creditos,cupos,id_profesor,nit,activo,no_curso);
-			cur.setMatriculados(matriculados);
+			 cur.setMatriculados(matriculados);
+			
+			
 			 con.desconectar();
 			return cur;
 		}catch(SQLException e){
@@ -788,6 +877,8 @@ public class universidadservicedb {
 }
 
 	public static boolean matricula(int nit,int no_curso, int id_profesor, int id_estudiante) {
+		
+		String query0="";
 		String query="";
 		String query1="";
 		String query2="";
@@ -802,33 +893,46 @@ public class universidadservicedb {
 		ResultSet r=null;
 		ResultSet re=null;
 		ResultSet re1=null;
+		ResultSet re0=null;
 		Connection connection=con.getConnection();
 		PreparedStatement p=null;
 		PreparedStatement p1=null;
-		PreparedStatement p2=null;
+		PreparedStatement p0=null;
 		try {
-
-			//Restale cupos a la materia
-			query1="Select id_curso, num_creditos, cupos, matriculados, Estudiante.numero_de_creditos FROM Curso as c,Estudiante Where no_curso=? AND cupos>=0 AND Estudiante.id_estudiante=? AND Estudiante.numero_de_creditos>=num_creditos";
+			
+			//Valido que tanto el curso como el estudiante tengan cupos y creditos disponibles 
+			//y que el curso no haya sido aprobado anteriormente.
+			query0="SELECT * FROM `Curso_Profesor_Estudiante` WHERE id_curso=? AND id_profesor=? AND id_estudiante=? AND (aprobado=TRUE OR matriculado=TRUE)";
+			query1="Select id_curso, num_creditos, cupos, matriculados, Estudiante.numero_de_creditos FROM Curso as c,Estudiante Where no_curso=? AND cupos>=0 AND c.activo=TRUE AND  Estudiante.id_estudiante=? AND Estudiante.numero_de_creditos>=num_creditos";
 			
 			p1=connection.prepareStatement(query1);
 			p1.setInt(1, no_curso);
 			p1.setInt(2, id_estudiante);
 			
+
 			System.out.println(p1);
 			r=p1.executeQuery();
 			while(r.next()){
 				num_creditos_curso=r.getInt("num_creditos");
 			 matriculados=r.getInt("matriculados");
-			System.out.println("num_creditos: "+matriculados);
+			System.out.println("num_creditos: "+num_creditos_curso);
 			 cupos=r.getInt("cupos");
 			 id_curso=r.getInt("id_curso");
 			if(cupos==0 || r.getInt("numero_de_creditos")< num_creditos_curso) {
-				System.out.println("Sin Cupos en curso o Sin creditos para estudiante");
+				System.out.println("Sin Cupos en curso o sin creditos para estudiante");
 				return false;
 			}
 			
+			p0=connection.prepareStatement(query0);
+			p0.setInt(1,id_curso);
+			p0.setInt(2, id_profesor);
+			p0.setInt(3, id_estudiante);
+			re0=p0.executeQuery();
 			
+			if(re0.next()) {
+				System.out.println("Esta materia no se puede matricular debido a que ya fue matriculada o ya está aprobada");
+				return false;
+			}
 			
 			System.out.println("Acá");
 			//Actualizar información de cupos y matriculados en tabla Curso
@@ -841,7 +945,7 @@ public class universidadservicedb {
 			p.execute();
 			
 			
-			//Actualizar información de Numero de creditos en tabla Estudiante
+			//Actualizar información de Numero de créditos en tabla Estudiante
 			query="SELECT numero_de_creditos FROM `Estudiante` where id_estudiante=?";
 			p1=connection.prepareStatement(query);
 			p1.setInt(1, id_estudiante);
@@ -862,7 +966,7 @@ public class universidadservicedb {
 				
 			}		
 			
-			//Introducir a la tabla
+			//Introducir a la tabla Curso_Profesor_Estudiante
 			String que="SELECT id_curso,id_profesor,id_estudiante FROM `Curso_Profesor_Estudiante` where id_estudiante=? AND id_curso=? AND id_profesor=?";
 			p=connection.prepareStatement(que);
 			p.setInt(1, -1);
@@ -871,13 +975,14 @@ public class universidadservicedb {
 			
 			re1=p.executeQuery();
 			
-			if(re.next()){
-				while(re1.next()){id_est=re1.getInt("id_estudiante");
+			if(re1.next()){
+				{id_est=re1.getInt("id_estudiante");
+				System.out.println("While Re1: ");
 			}
 			
 			System.out.println("Esto es idecurso: "+id_est);
 			if(id_est==-1) {
-				query="UPDATE `Curso_Profesor_Estudiante` SET `id_estudiante`=? Where id_curso=? AND id_profesor=?";
+				query="UPDATE `Curso_Profesor_Estudiante` SET `id_estudiante`=?, `matriculado`=TRUE  Where id_curso=? AND id_profesor=?";
 				p=connection.prepareStatement(query);
 				p.setInt(1, id_estudiante);
 				p.setInt(2, id_curso);
@@ -886,8 +991,8 @@ public class universidadservicedb {
 			}
 			}
 			
-			if(!re.next()) {
-				query="INSERT into `Curso_Profesor_Estudiante` (`id_curso`,`id_profesor`,`id_estudiante`,`nit`,`aprobado`,`cursado`) VALUES (?,?,?,?,?,?)";
+			if(id_est==0) {
+				query="INSERT into `Curso_Profesor_Estudiante` (`id_curso`,`id_profesor`,`id_estudiante`,`nit`,`aprobado`,`cursado`,`matriculado`) VALUES (?,?,?,?,?,?,TRUE)";
 				System.out.println(query);
 				p=connection.prepareStatement(query);
 				p.setInt(1, id_curso);
@@ -925,9 +1030,7 @@ public class universidadservicedb {
 		ArrayList<Curso> cursos=new ArrayList<Curso>();
 		
 		try {
-			query="SELECT c.id_curso,c.nombre_materia,c.id_curso_prerrequisito,c.num_creditos,c.cupos,c.id_profesor,c.nit,c.activo,c.matriculados,c.no_curso"
-					+ " FROM Curso_Profesor_Estudiante as cu, Curso as c"
-					+ " WHERE c.id_curso = cu.id_curso AND cu.id_estudiante=?";
+			query="SELECT DISTINCT c.id_curso,c.nombre_materia,c.num_creditos, c.id_curso_prerrequisito FROM  Curso as c,  (SELECT * FROM Curso_Profesor_Estudiante WHERE matriculado=TRUE) as cu WHERE c.id_curso = cu.id_curso AND cu.id_estudiante=?";
 			
 			p=connection.prepareStatement(query);
 			p.setInt(1, id_estudiante);
@@ -937,11 +1040,11 @@ public class universidadservicedb {
 				String nombre_materia=resultado.getString("nombre_materia");
 				int curso_prerrequisito=resultado.getInt("id_curso_prerrequisito");
 				int num_creditos= resultado.getInt("num_creditos");
-				int cupos=resultado.getInt("cupos");
-				int id_profesor=resultado.getInt("id_profesor");
-				boolean activo=resultado.getBoolean("activo");
-				int matriculados=resultado.getInt("matriculados");
-				int no_curso=resultado.getInt("no_curso");
+				int cupos=0;
+				int id_profesor=2;
+				boolean activo=true;
+				int matriculados=0;
+				int no_curso=0;
 				Curso cur=new Curso(id,nombre_materia,curso_prerrequisito,num_creditos,cupos,id_profesor,nit,activo,no_curso);
 				cur.setMatriculados(matriculados);
 				cursos.add(cur);
@@ -968,24 +1071,18 @@ public class universidadservicedb {
 		ArrayList<Curso> cursos=new ArrayList<Curso>();
 		
 		try {
-			query="SELECT c.id_curso,c.nombre_materia,c.id_curso_prerrequisito,c.num_creditos,c.cupos,c.id_profesor,c.nit,c.activo,c.matriculados FROM Curso_Profesor_Estudiante as cu, Curso as c WHERE c.id_curso = cu.id_curso AND cu.id_estudiante=? AND cu.aprobado=?";
+			query="SELECT DISTINCT c.`id_curso`,c.`nombre_materia`,c.`id_curso_prerrequisito`,c.`num_creditos` FROM (SELECT * FROM Curso_Profesor_Estudiante WHERE aprobado=TRUE) as cu, Curso as c WHERE c.id_curso = cu.id_curso AND cu.id_estudiante=? AND cu.aprobado=?";
 			
 			p=connection.prepareStatement(query);
 			p.setInt(1, id_estudiante);
 			p.setBoolean(2, true);
 			resultado=p.executeQuery();
 			while(resultado.next()) {
+				int prerreq=resultado.getInt("id_curso_prerrequisito");
 				int id=resultado.getInt("id_curso");
 				String nombre_materia=resultado.getString("nombre_materia");
-				int curso_prerrequisito=resultado.getInt("id_curso_prerrequisito");
-				int num_creditos= resultado.getInt("num_creditos");
-				int cupos=resultado.getInt("cupos");
-				int id_profesor=resultado.getInt("id_profesor");
-				boolean activo=resultado.getBoolean("activo");
-				int matriculados=resultado.getInt("matriculados");
-				int no_curso=resultado.getInt("no_curso");
-				Curso cur=new Curso(id,nombre_materia,curso_prerrequisito,num_creditos,cupos,id_profesor,nit,activo,no_curso);
-				cur.setMatriculados(matriculados);
+				int num_creditos=resultado.getInt("num_creditos");
+				Curso cur=new Curso(id,nombre_materia,prerreq,num_creditos,0,0,nit,true,-1);
 				cursos.add(cur);
 			}
 			System.out.println("Busqueda existosa");
@@ -1005,15 +1102,16 @@ public class universidadservicedb {
 		PreparedStatement p=null;
 		
 		try {
-			query="UPDATE `Curso_Profesor_Estudiante` SET `aprobado`=?, `cursado`=? where id_estudiante=? AND id_curso=?";
+			query="UPDATE `Curso_Profesor_Estudiante` SET `aprobado`=?, `cursado`=? , `matriculado`=? where id_estudiante=? AND id_curso=? AND matriculado=TRUE";
 			p=connection.prepareStatement(query);
 			p.setBoolean(1, true);
-			p.setBoolean(2, true);			
-			p.setInt(3, id_estudiante);
-			p.setInt(4, id_curso);
+			p.setBoolean(2, true);	
+			p.setBoolean(3, false);	
+			p.setInt(4, id_estudiante);
+			p.setInt(5, id_curso);
 		
 			p.execute();
-			resultado="Curso de estudiante aprobado";
+			resultado="aprobado";
 			
 			return resultado;
 		}catch(Exception e){
@@ -1022,26 +1120,26 @@ public class universidadservicedb {
 		}
 	}
 	public static String cursar_curso_de_estudiante(int nit, int id_estudiante,int id_curso) {
-		String query="";
+		String query="Curso no añadido a historial";
 		String resultado="";
 		Conexion con =new Conexion();
 		Connection connection=con.getConnection();
 		PreparedStatement p=null;
 		
 		try {
-			query="UPDATE `Curso_Profesor_Estudiante` SET cursado=TRUE where id_estudiante=? AND id_curso=?";
+			query="UPDATE `Curso_Profesor_Estudiante` SET cursado=TRUE, matriculado=FALSE where id_estudiante=? AND id_curso=? AND matriculado=TRUE";
 			p=connection.prepareStatement(query);
 			
 			p.setInt(1, id_estudiante);
 			p.setInt(2, id_curso);
 		
 			p.execute();
-			resultado="Curso de estudiante dado";
+			resultado="Curso de estudiante añadido a historial";
 			
 			return resultado;
 		}catch(Exception e){
 			System.out.print("Exception"+e);
-			return resultado;
+			return "Curso no añadido a historial";
 		}
 	}
 }

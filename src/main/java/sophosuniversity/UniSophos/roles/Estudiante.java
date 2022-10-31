@@ -14,6 +14,7 @@ public class Estudiante {
 	private String facultad;
 	private  ArrayList<String> cursos_dados = new ArrayList<String>();
 	private  ArrayList<String> cursos_aprobados = new ArrayList<String>();
+	private  ArrayList<String> cursos_matriculados = new ArrayList<String>();
 	public Estudiante(int id,String nombre, String apellido,int numero_de_creditos, int semestre_cursado, String email, String direccion, String telefono,boolean activo,int nit, String facultad) {
 		this.id=id;
 		this.nombre=nombre;
@@ -99,6 +100,18 @@ public boolean getActivo() {
 
 	public void setCursos_aprobados(String curso) {
 		this.cursos_aprobados.add(curso);
+	}
+
+
+
+	public ArrayList<String> getCursos_matriculados() {
+		return cursos_matriculados;
+	}
+
+
+
+	public void setCursos_matriculados(String curso) {
+		this.cursos_matriculados.add(curso);
 	}
 	
 }
